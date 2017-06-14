@@ -268,7 +268,8 @@ class VideoApp: NSObject {
                 let appDelegate = UIApplication.shared.delegate as! AppDelegate
                 bottomMenu.showInViewController(viewController: (appDelegate.window?.rootViewController)!)
             } else {
-                
+                let snackBar = SSSnackbar.init(message: NSLocalizedString("This video can not download", comment: ""), actionText: NSLocalizedString("OK", comment: ""), duration: 5, actionBlock: nil, dismissalBlock: nil)
+                snackBar?.show()
             }
         }
     }

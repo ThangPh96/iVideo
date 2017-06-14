@@ -11,6 +11,7 @@ import XCDYouTubeKit
 import AVFoundation
 import AVKit
 import QorumLogs
+import SSSnackbar
 
 class NowPlayingViewController: UIViewController {
 
@@ -211,12 +212,15 @@ class NowPlayingViewController: UIViewController {
                     videoURL.create(streamURL: streamURL!, video: video)
                     completionHandler?(videoURL)
                 }
+            } else {
+                let snackBar = SSSnackbar.init(message: NSLocalizedString("This video can not use", comment: ""), actionText: NSLocalizedString("OK", comment: ""), duration: 5, actionBlock: nil, dismissalBlock: nil)
+                snackBar?.show()
             }
         }
     }
     
     func startVideo(video: XCDYouTubeVideo, streamURL: NSURL) {
-        player = AVQueuePlayer(url: streamURL as URL)
+        player = AVPlayer(url: streamURL as URL)
 //        player = AVQueuePlayer(items: queue)
         playerViewController.player = player
         playerViewController.player!.play()
