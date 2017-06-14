@@ -128,48 +128,96 @@ class NowPlayingViewController: UIViewController {
     // MARK: - Play Video
     
     private func playVideo() {
+        
         let video = VideoApp.nowPlaying.getPlaylist().videos[VideoApp.nowPlaying.getIndex()]
+//        var prevVideo = Video()
+//        var nextVideo = Video()
+//        if VideoApp.nowPlaying.getIndex() != 0 {
+//            prevVideo = VideoApp.nowPlaying.getPlaylist().videos[VideoApp.nowPlaying.getIndex()-1]
+//        } else {
+//            prevVideo = VideoApp.nowPlaying.getPlaylist().videos[VideoApp.nowPlaying.getPlaylist().videos.count-1]
+//        }
+//        if VideoApp.nowPlaying.getIndex() != VideoApp.nowPlaying.getPlaylist().videos.count {
+//            nextVideo = VideoApp.nowPlaying.getPlaylist().videos[VideoApp.nowPlaying.getIndex()+1]
+//        } else {
+//            nextVideo = VideoApp.nowPlaying.getPlaylist().videos[0]
+//        }
+//        var queue: [AVPlayerItem] = []
+        //
         self.currentCountLbl.text = "\(VideoApp.nowPlaying.getIndex()+1)/\(VideoApp.nowPlaying.getPlaylist().videos.count)"
         self.nameLabel.text = video.title
         if let offlinePath = video.offlinePath {
-            let fileManager = FileManager.default
-            let directoryURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            let dataPath = directoryURL.appendingPathComponent(offlinePath)
-            debugPrint(dataPath)
-            self.startVideo(video: XCDYouTubeVideo(), streamURL: dataPath as NSURL)
+            self.getVideoOfflinePath( offlinePath: offlinePath, completionHandler: { (url) in
+//                self.getVideoOfflinePath(offlinePath: prevVideo.offlinePath, completionHandler: { (prevURL) in
+//                    queue.append(AVPlayerItem(url: prevURL as URL))
+//                    queue.append(AVPlayerItem(url: url as URL))
+//                    self.getVideoOfflinePath(offlinePath: nextVideo.offlinePath, completionHandler: { (nextURL) in
+//                        queue.append(AVPlayerItem(url: nextURL as URL))
+                        self.startVideo(video: XCDYouTubeVideo(), streamURL: url)
+//                    })
+//                })
+            })
         } else {
-            XCDYouTubeClient.default().getVideoWithIdentifier(video.videoId!) { (video, error) -> Void in
-                if let video = video {
-                    QL1(video.streamURLs)
-                    var streamURL: NSURL?
-                    switch self.videoQuality {
-                    case .hd720p:
-                        streamURL = video.streamURLs[NSNumber(value: XCDYouTubeVideoQuality.HD720.rawValue) as NSObject] as NSURL?
-                        break
-                    case .medium:
-                        streamURL = video.streamURLs[NSNumber(value: XCDYouTubeVideoQuality.medium360.rawValue) as NSObject] as NSURL?
-                        break
-                    case .small:
-                        streamURL = video.streamURLs[NSNumber(value: XCDYouTubeVideoQuality.small240.rawValue) as NSObject] as NSURL?
-                        break
-                    }
-                    if streamURL == nil {
-                        for videoQuality in self.preferredVideoQualities {
-                            if let streamURL = video.streamURLs[videoQuality as! NSObject] {
-                                self.startVideo(video: video, streamURL: streamURL as NSURL)
-                                break
-                            }
+            self.getVideoWithIdentifier(video: video, completionHandler: { (videoURL) in
+                self.startVideo(video: videoURL.video, streamURL: videoURL.streamURL)
+            })
+        }
+    }
+    
+    class VideoURL {
+        var streamURL = NSURL()
+        var video = XCDYouTubeVideo()
+        
+        func create(streamURL: NSURL, video: XCDYouTubeVideo) {
+            self.streamURL = streamURL
+            self.video = video
+        }
+    }
+    
+    func getVideoOfflinePath(offlinePath: String, completionHandler: ((NSURL) -> Void)?) {
+        let fileManager = FileManager.default
+        let directoryURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let dataPath = directoryURL.appendingPathComponent(offlinePath)
+        debugPrint(dataPath)
+        completionHandler?(dataPath as NSURL)
+    }
+    
+    func getVideoWithIdentifier(video: Video, completionHandler: ((VideoURL) -> Void)?) {
+        let videoURL = VideoURL()
+        XCDYouTubeClient.default().getVideoWithIdentifier(video.videoId!) { (video, error) -> Void in
+            if let video = video {
+                QL1(video.streamURLs)
+                var streamURL: NSURL?
+                switch self.videoQuality {
+                case .hd720p:
+                    streamURL = video.streamURLs[NSNumber(value: XCDYouTubeVideoQuality.HD720.rawValue) as NSObject] as NSURL?
+                    break
+                case .medium:
+                    streamURL = video.streamURLs[NSNumber(value: XCDYouTubeVideoQuality.medium360.rawValue) as NSObject] as NSURL?
+                    break
+                case .small:
+                    streamURL = video.streamURLs[NSNumber(value: XCDYouTubeVideoQuality.small240.rawValue) as NSObject] as NSURL?
+                    break
+                }
+                if streamURL == nil {
+                    for videoQuality in self.preferredVideoQualities {
+                        if let streamURL = video.streamURLs[videoQuality as! NSObject] {
+                            videoURL.create(streamURL: streamURL as NSURL, video: video)
+                            completionHandler?(videoURL)
+                            break
                         }
-                    } else {
-                        self.startVideo(video: video, streamURL: streamURL!)
                     }
+                } else {
+                    videoURL.create(streamURL: streamURL!, video: video)
+                    completionHandler?(videoURL)
                 }
             }
         }
     }
     
     func startVideo(video: XCDYouTubeVideo, streamURL: NSURL) {
-        player = AVPlayer(url: streamURL as URL)
+        player = AVQueuePlayer(url: streamURL as URL)
+//        player = AVQueuePlayer(items: queue)
         playerViewController.player = player
         playerViewController.player!.play()
     }
