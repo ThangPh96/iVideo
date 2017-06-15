@@ -88,8 +88,20 @@ class NowPlayingViewController: UIViewController {
             self.nameLabel.text = VideoApp.nowPlaying.getPlaylist().videos[VideoApp.nowPlaying.getIndex()].title
         }
         NotificationCenter.default.addObserver(self, selector: #selector(applicationDidEnterBackground), name: NSNotification.Name.UIApplicationDidEnterBackground, object: nil)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying),
+                                               name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: player.currentItem)
     }
 
+    func playerDidFinishPlaying(note: NSNotification) {
+        print("Video Finished")
+        if VideoApp.nowPlaying.getIndex() != VideoApp.nowPlaying.getPlaylist().videos.count {
+            VideoApp.nowPlaying.changeVideoPlaying(index: VideoApp.nowPlaying.getIndex() + 1)
+        } else {
+            VideoApp.nowPlaying.changeVideoPlaying(index: 0)
+        }
+    }
+    
     func applicationDidEnterBackground(notification: Notification) {
         playerViewController.player?.perform(#selector(playerViewController.player?.play), with: nil, afterDelay: 0.01)
     }
@@ -213,8 +225,13 @@ class NowPlayingViewController: UIViewController {
                     completionHandler?(videoURL)
                 }
             } else {
-                let snackBar = SSSnackbar.init(message: NSLocalizedString("This video can not use", comment: ""), actionText: NSLocalizedString("OK", comment: ""), duration: 5, actionBlock: nil, dismissalBlock: nil)
+                let snackBar = SSSnackbar.init(message: NSLocalizedString("This video can't use. Playing next video.", comment: ""), actionText: NSLocalizedString("OK", comment: ""), duration: 5, actionBlock: nil, dismissalBlock: nil)
                 snackBar?.show()
+                if VideoApp.nowPlaying.getIndex() != VideoApp.nowPlaying.getPlaylist().videos.count {
+                    VideoApp.nowPlaying.changeVideoPlaying(index: VideoApp.nowPlaying.getIndex() + 1)
+                } else {
+                    VideoApp.nowPlaying.changeVideoPlaying(index: 0)
+                }
             }
         }
     }
