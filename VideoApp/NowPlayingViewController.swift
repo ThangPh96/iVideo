@@ -95,7 +95,7 @@ class NowPlayingViewController: UIViewController {
 
     func playerDidFinishPlaying(note: NSNotification) {
         print("Video Finished")
-        if VideoApp.nowPlaying.getIndex() != VideoApp.nowPlaying.getPlaylist().videos.count {
+        if VideoApp.nowPlaying.getIndex() != VideoApp.nowPlaying.getPlaylist().videos.count - 1 {
             VideoApp.nowPlaying.changeVideoPlaying(index: VideoApp.nowPlaying.getIndex() + 1)
         } else {
             VideoApp.nowPlaying.changeVideoPlaying(index: 0)
@@ -150,7 +150,7 @@ class NowPlayingViewController: UIViewController {
 //        } else {
 //            prevVideo = VideoApp.nowPlaying.getPlaylist().videos[VideoApp.nowPlaying.getPlaylist().videos.count-1]
 //        }
-//        if VideoApp.nowPlaying.getIndex() != VideoApp.nowPlaying.getPlaylist().videos.count {
+//        if VideoApp.nowPlaying.getIndex() != VideoApp.nowPlaying.getPlaylist().videos.count-1 {
 //            nextVideo = VideoApp.nowPlaying.getPlaylist().videos[VideoApp.nowPlaying.getIndex()+1]
 //        } else {
 //            nextVideo = VideoApp.nowPlaying.getPlaylist().videos[0]
